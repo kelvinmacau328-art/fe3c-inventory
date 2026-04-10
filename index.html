@@ -7,11 +7,13 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <style>
-        /* 針對新功能的微調 CSS (保留 SortableJS 與下拉選單所需的樣式) */
         .drag-handle { cursor: grab; color: #bbb; font-size: 16px; padding: 0 10px; }
         .drag-handle:active { cursor: grabbing; color: #000; }
         select.category-select { padding: 8px; border: 1px solid #e0e0e0; border-radius: 4px; background: #fdfdfd; outline: none; font-size: 12px; }
         .year-tab-container { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 2px dashed #eee; display: flex; flex-wrap: wrap; gap: 8px; }
+        /* 分類管理列表樣式 */
+        .cat-list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+        .cat-list-item:hover { background: #f9f9f9; }
     </style>
 </head>
 <body>
@@ -33,7 +35,8 @@
         <div class="controls" style="display:flex; justify-content:space-between; align-items:flex-end;">
             <div>
                 <button class="btn" id="btn-add-item">+ 新增品項</button>
-                <button class="btn btn-outline" style="margin-left:10px;" id="btn-reset">⚠️ 初始化/清空雲端資料</button>
+                <button class="btn btn-outline" style="margin-left:10px;" onclick="window.openCatModal()">🏷️ 管理分類</button>
+                <button class="btn btn-outline" style="margin-left:10px; color:#e74c3c; border-color:#e74c3c;" id="btn-reset">⚠️ 清空重置</button>
             </div>
             <div>
                 <span style="font-size: 11px; color: #888; margin-right: 15px;">* 拖曳左側 ☰ 可排序</span>
@@ -70,11 +73,13 @@
             <div style="display:flex; align-items:center; gap:8px;">
                 <input type="color" id="new-dist-color" value="#000000" style="width:30px; height:30px; border:none; background:transparent; cursor:pointer;">
                 <input type="text" id="new-dist-name" class="search-box" style="width:120px;" placeholder="新經銷商名稱">
-                <button class="btn" id="btn-add-dist">+ 新增</button>
+                <button class="btn" id="btn-add-dist">+ 新增店鋪</button>
             </div>
         </div>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
-            <h3 id="current-dist-title" style="margin:0; font-weight:400;"></h3>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px;">
+            <div style="display:flex; align-items:center; gap: 15px;">
+                <h3 id="current-dist-title" style="margin:0; font-weight:400;"></h3>
+                <div id="dist-action-btns"></div> </div>
             <div><span style="font-size:10px; color:#888;">標籤色: </span><input type="color" id="edit-dist-color" style="border:none; background:transparent; cursor:pointer;"></div>
         </div>
         <div class="year-tab-container" id="dist-year-tabs" style="margin-top:15px;"></div>
@@ -86,12 +91,10 @@
     <div id="internalModal" class="modal-overlay" onclick="closeModal('internalModal', event)"><div class="modal-content" onclick="event.stopPropagation()"><span class="close-btn" onclick="closeModal('internalModal', true)">&times;</span><div id="internal-modal-title-area"></div><div id="internal-modal-body"></div></div></div>
 
     <script type="module">
-        // 載入 Firebase 模組
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-analytics.js";
 
-        // === 你的 Firebase Config ===
         const firebaseConfig = {
             apiKey: "AIzaSyCczS48B6ZguyH-e52z2C1CvGTJ5IQY8v8",
             authDomain: "fe3c-inventory.firebaseapp.com",
@@ -105,33 +108,25 @@
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app);
         const db = getFirestore(app);
-        
-        // 指定資料庫存放位置
         const dataRef = doc(db, "inventory", "mainData");
 
-        // 狀態變數
+        // 狀態變數 (加入 Categories)
         let items = [], internalColumns = [], distributors = [], distColors = {}, yearsList = ['2026'];
+        let categories = ['項鍊', '戒指', '耳環', '手鍊', '服飾', '其他']; // 預設分類
         const monthsList = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
         let currentDist = '', currentYearView = '2026', currentDistView = '總覽';
-        const categories = ['項鍊', '戒指', '耳環', '手鍊', '服飾', '其他'];
 
-        // 工具函數
         const escapeHTML = (str) => typeof str !== 'string' ? str : str.replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t]));
 
-        // === ☁️ 雲端儲存機制 (寫入) ===
+        // === ☁️ 雲端儲存機制 ===
         window.saveData = async function() {
-            recalculate(); // 儲存前先計算庫存總和
+            recalculate(); 
             try {
-                await setDoc(dataRef, { items, internalColumns, distributors, distColors, yearsList });
-            } catch (error) {
-                console.error("寫入失敗：", error);
-                alert("雲端儲存失敗，請確認網路連線或 Firebase 權限設定！");
-            }
+                await setDoc(dataRef, { items, internalColumns, distributors, distColors, yearsList, categories });
+            } catch (error) { alert("雲端儲存失敗，請確認網路連線！"); }
         };
 
-        // === ☁️ 雲端同步機制 (即時讀取) ===
         onSnapshot(dataRef, (snap) => {
-            // 隱藏 Loading 畫面
             const loader = document.getElementById('loadingScreen');
             if(loader) { loader.style.opacity = '0'; setTimeout(() => loader.style.display = 'none', 500); }
 
@@ -139,15 +134,10 @@
                 const d = snap.data();
                 items = d.items || []; internalColumns = d.internalColumns || [];
                 distributors = d.distributors || []; distColors = d.distColors || {};
-                yearsList = d.yearsList || ['2026'];
+                yearsList = d.yearsList || ['2026']; categories = d.categories || ['項鍊', '戒指', '耳環', '手鍊', '服飾', '其他'];
                 if (!currentDist && distributors.length > 0) currentDist = distributors[0];
                 renderAll();
-            } else {
-                console.log("雲端尚未建立資料");
             }
-        }, (error) => {
-            console.error("同步失敗：", error);
-            document.getElementById('loadingText').innerHTML = "<span style='color:#e74c3c;'>無法連線，請檢查網路或 Firebase 權限！</span>";
         });
 
         // === 邏輯驗算 ===
@@ -159,7 +149,7 @@
                     yearsList.forEach((y, yi) => {
                         monthsList.forEach((m, mi) => {
                             if (!item.distDetails[d]) item.distDetails[d] = { years: {} };
-                            if (!item.distDetails[d].years) item.distDetails[d].years = {}; // 防錯機制
+                            if (!item.distDetails[d].years) item.distDetails[d].years = {};
                             if (!item.distDetails[d].years[y]) {
                                 item.distDetails[d].years[y] = {};
                                 monthsList.forEach(mStr => { item.distDetails[d].years[y][mStr] = { carryover:0, inbound:0, adj:0, assist:0, sales:0, discount:0.65, note:'' }; });
@@ -189,10 +179,14 @@
                 if (kw && !item.id.toLowerCase().includes(kw) && !item.name.toLowerCase().includes(kw) && !(item.category||'').toLowerCase().includes(kw)) return;
                 let dtSum = 0; distributors.forEach(d => dtSum += (item.dist[d] || 0));
                 
+                // 確保如果有舊的不存在的分類，也能顯示出來
+                let catOptions = categories.map(c => `<option value="${c}" ${c===item.category?'selected':''}>${c}</option>`);
+                if(item.category && !categories.includes(item.category)) catOptions.push(`<option value="${item.category}" selected>${item.category} (未建立)</option>`);
+
                 html += `<tr>
                     <td class="drag-handle">☰</td>
                     <td><button class="btn-danger" onclick="window.delItem(${index})">刪除</button></td>
-                    <td><select class="category-select" onchange="window.upItem(${index},'category',this.value)">${categories.map(c => `<option value="${c}" ${c===item.category?'selected':''}>${c}</option>`).join('')}</select></td>
+                    <td><select class="category-select" onchange="window.upItem(${index},'category',this.value)">${catOptions.join('')}</select></td>
                     <td><input type="text" class="id-input" value="${escapeHTML(item.id)}" onchange="window.upItem(${index},'id',this.value)"></td>
                     <td><input type="text" class="name-input" value="${escapeHTML(item.name)}" onchange="window.upItem(${index},'name',this.value)"></td>
                     <td><input type="text" class="short-input" value="${escapeHTML(item.size)}" onchange="window.upItem(${index},'size',this.value)"></td>
@@ -207,7 +201,16 @@
         }
 
         function renderInternal() {
-            let h = `<th>貨號</th><th>品名</th>`; internalColumns.forEach((c, i) => h += `<th>${escapeHTML(c)} <button class="btn-danger" onclick="window.delIntCol(${i})">刪</button></th>`);
+            let h = `<th>貨號</th><th>品名</th>`; 
+            internalColumns.forEach((c, i) => {
+                // 加入編輯與刪除按鈕
+                h += `<th>${escapeHTML(c)} 
+                    <div style="margin-top:5px;">
+                        <button class="btn-danger" style="color:#f39c12; border-color:#f39c12;" onclick="window.editIntCol(${i})">✏️ 改名</button> 
+                        <button class="btn-danger" onclick="window.delIntCol(${i})">刪</button>
+                    </div>
+                </th>`;
+            });
             document.getElementById('internal-head').innerHTML = h;
             let b = '';
             items.forEach((item, index) => {
@@ -224,8 +227,20 @@
         function renderDistTabs() {
             let h1 = ''; distributors.forEach(d => h1 += `<button class="btn-dist ${currentDist===d?'active':''}" style="border-bottom:4px solid ${distColors[d]};" onclick="window.selDist('${d}')">${escapeHTML(d)}</button>`);
             document.getElementById('dist-level1-tabs').innerHTML = h1;
-            if(!currentDist) return;
+            
+            if(!currentDist) {
+                document.getElementById('current-dist-title').innerText = "請先新增經銷商";
+                document.getElementById('dist-action-btns').innerHTML = "";
+                return;
+            }
+
             document.getElementById('current-dist-title').innerText = `📋 [ ${currentDist} ] 庫存明細`;
+            // 加入經銷商編輯與刪除按鈕
+            document.getElementById('dist-action-btns').innerHTML = `
+                <button class="btn-danger" style="color:#f39c12; border-color:#f39c12;" onclick="window.editDistName('${currentDist.replace(/'/g,"\\'")}')">✏️ 編輯店名</button>
+                <button class="btn-danger" onclick="window.delDist('${currentDist.replace(/'/g,"\\'")}')">🗑️ 刪除此店</button>
+            `;
+
             document.getElementById('edit-dist-color').value = distColors[currentDist] || '#000000';
             
             let yh = ''; yearsList.forEach(y => yh += `<button class="btn-year ${currentYearView===y?'active':''}" onclick="window.selYear('${y}')">${y} 年度</button>`);
@@ -238,12 +253,12 @@
         }
 
         function renderDistTable() {
-            if(!currentDist) return;
+            if(!currentDist) { document.getElementById('dist-body').innerHTML = ''; return; }
             const hEl = document.getElementById('dist-head'), bEl = document.getElementById('dist-body');
             let html = '';
             if (currentDistView === '總覽') {
                 hEl.innerHTML = `<tr><th>貨號</th><th>品名</th><th>${currentYearView}總補貨</th><th>${currentYearView}總銷售</th><th>剩餘庫存</th></tr>`;
-                items.forEach((item, index) => {
+                items.forEach((item) => {
                     let ts=0, tr=0;
                     monthsList.forEach(m => { const d = item.distDetails[currentDist].years[currentYearView][m]; ts += d.sales; tr += d.inbound; });
                     html += `<tr><td class="text-cell">${escapeHTML(item.id)}</td><td class="text-cell name-input">${escapeHTML(item.name)}</td>
@@ -271,7 +286,105 @@
             bEl.innerHTML = html;
         }
 
-        // === 視窗功能與按鈕綁定 ===
+        // === 🌟 分類管理功能 ===
+        window.openCatModal = () => {
+            renderCatModal();
+            document.getElementById('stockModal').style.display = 'flex';
+        };
+
+        window.renderCatModal = () => {
+            let listHtml = categories.map((c, i) => `
+                <div class="cat-list-item">
+                    <span style="font-weight:bold;">${escapeHTML(c)}</span>
+                    <div>
+                        <button class="btn-danger" style="color:#f39c12; border-color:#f39c12;" onclick="window.editCat(${i})">✏️ 改名</button>
+                        <button class="btn-danger" onclick="window.delCat(${i})">🗑️ 刪除</button>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('modal-title-area').innerHTML = `<span class="modal-title-text">⚙️ 分類設定</span><h3 class="modal-title-main">管理品項分類</h3>`;
+            document.getElementById('modal-body').innerHTML = `
+                <div class="modal-input-group">
+                    <input type="text" id="new-cat-input" placeholder="輸入新分類名稱..." style="flex:1;">
+                    <button class="btn" onclick="window.addCat()">+ 新增分類</button>
+                </div>
+                <div style="border:1px solid #eee; border-radius:6px; max-height:300px; overflow-y:auto;">
+                    ${listHtml || '<div style="padding:15px; text-align:center; color:#bbb;">尚無分類</div>'}
+                </div>
+            `;
+        };
+
+        window.addCat = () => {
+            let v = document.getElementById('new-cat-input').value.trim();
+            if(v && !categories.includes(v)) { categories.push(v); window.saveData(); renderCatModal(); }
+        };
+
+        window.editCat = (i) => {
+            let oldName = categories[i];
+            let newName = prompt("請輸入新的分類名稱：", oldName);
+            if(newName && newName.trim() !== "" && newName !== oldName && !categories.includes(newName)) {
+                categories[i] = newName;
+                // 自動更新所有舊商品的分類名稱，資料不遺失！
+                items.forEach(item => { if(item.category === oldName) item.category = newName; });
+                window.saveData(); renderCatModal();
+            }
+        };
+
+        window.delCat = (i) => {
+            if(confirm(`確定要刪除分類「${categories[i]}」嗎？(已設定此分類的商品將被改為空白)`)) {
+                let oldName = categories[i];
+                categories.splice(i, 1);
+                items.forEach(item => { if(item.category === oldName) item.category = "其他"; }); // 預設歸類為其他
+                window.saveData(); renderCatModal();
+            }
+        };
+
+        // === 🌟 自訂欄位編輯功能 ===
+        window.editIntCol = (i) => {
+            let oldName = internalColumns[i];
+            let newName = prompt("請輸入新的欄位名稱：", oldName);
+            if(newName && newName.trim() !== "" && newName !== oldName && !internalColumns.includes(newName)) {
+                internalColumns[i] = newName;
+                // 自動轉移舊欄位的歷史數據
+                items.forEach(item => {
+                    if(item.internal[oldName]) {
+                        item.internal[newName] = item.internal[oldName];
+                        delete item.internal[oldName];
+                    }
+                });
+                window.saveData();
+            }
+        };
+
+        // === 🌟 經銷商編輯功能 ===
+        window.editDistName = (oldName) => {
+            let newName = prompt("請輸入新的經銷商店名：", oldName);
+            if(newName && newName.trim() !== "" && newName !== oldName && !distributors.includes(newName)) {
+                distributors[distributors.indexOf(oldName)] = newName;
+                distColors[newName] = distColors[oldName]; delete distColors[oldName];
+                
+                // 自動轉移所有庫存與銷售紀錄
+                items.forEach(item => {
+                    item.dist[newName] = item.dist[oldName]; delete item.dist[oldName];
+                    item.distDetails[newName] = item.distDetails[oldName]; delete item.distDetails[oldName];
+                });
+                currentDist = newName;
+                window.saveData();
+            }
+        };
+
+        window.delDist = (name) => {
+            if(confirm(`【警告】確定要刪除店鋪「${name}」嗎？所有相關的進出貨明細都會被移除！`)) {
+                distributors = distributors.filter(d => d !== name);
+                delete distColors[name];
+                items.forEach(item => { delete item.dist[name]; delete item.distDetails[name]; });
+                currentDist = distributors.length > 0 ? distributors[0] : '';
+                window.saveData();
+            }
+        };
+
+        // 視窗與基礎綁定
         window.upItem = (i, k, v) => { items[i][k] = k === 'price' ? parseInt(v) : v; window.saveData(); };
         window.delItem = (i) => { if(confirm('刪除商品？')) { items.splice(i,1); window.saveData(); } };
         window.selDist = (d) => { currentDist = d; currentDistView = '總覽'; renderAll(); };
@@ -279,18 +392,18 @@
         window.selView = (v) => { currentDistView = v; renderAll(); };
         window.upDist = (i, f, v) => { items[i].distDetails[currentDist].years[currentYearView][currentDistView][f] = f==='note'?v:parseFloat(v); window.saveData(); };
 
-        // 彈窗模組
+        // 大貨與內部彈窗 (縮寫保留原邏輯)
         let curI = null; window.openInModal = (i) => { curI = i; renderInModal(); document.getElementById('internalModal').style.display = 'flex'; };
         function renderInModal() { const item = items[curI], data = item.inStock; let logs = data.logs.map((l,li) => `<tr><td>${l.date}</td><td>${escapeHTML(l.note)}</td><td style="font-weight:bold;color:#16a085;">${l.qty}</td><td><button class="btn-danger" onclick="window.delInLog(${li})">刪除</button></td></tr>`).join('');
-            document.getElementById('internal-modal-title-area').innerHTML = `<span class="modal-title-text">📥 大貨明細</span><h3 class="modal-title-main">${item.id}</h3>`;
-            document.getElementById('internal-modal-body').innerHTML = `<div style="text-align:right; margin-bottom:10px; font-size:24px; font-weight:bold; color:#16a085;">總計: ${data.total}</div><div class="modal-input-group"><input id="in-d" value="${(new Date().getMonth()+1)+'/'+new Date().getDate()}" style="width:60px;"><input id="in-n" placeholder="備註" style="flex:1;"><input id="in-q" type="number" placeholder="量" style="width:60px;"><button class="btn" onclick="window.addInLog()">+ 新增</button></div><table class="breakdown-table"><tr><th>日期</th><th>備註</th><th>數量</th><th>操作</th></tr>${logs}</table>`; }
+            document.getElementById('internal-modal-title-area').innerHTML = `<h3 class="modal-title-main">大貨入庫：${item.id}</h3>`;
+            document.getElementById('internal-modal-body').innerHTML = `<div style="text-align:right; font-size:24px; font-weight:bold; color:#16a085;">總計: ${data.total}</div><div class="modal-input-group"><input id="in-d" value="${(new Date().getMonth()+1)+'/'+new Date().getDate()}" style="width:60px;"><input id="in-n" placeholder="備註" style="flex:1;"><input id="in-q" type="number" placeholder="量" style="width:60px;"><button class="btn" onclick="window.addInLog()">+ 新增</button></div><table class="breakdown-table"><tr><th>日期</th><th>備註</th><th>數量</th><th>操作</th></tr>${logs}</table>`; }
         window.addInLog = () => { const q = parseInt(document.getElementById('in-q').value)||0; items[curI].inStock.logs.push({date:document.getElementById('in-d').value, note:document.getElementById('in-n').value, qty:q}); items[curI].inStock.total = items[curI].inStock.logs.reduce((s,l)=>s+l.qty,0); window.saveData(); renderInModal(); };
         window.delInLog = (li) => { items[curI].inStock.logs.splice(li,1); items[curI].inStock.total = items[curI].inStock.logs.reduce((s,l)=>s+l.qty,0); window.saveData(); renderInModal(); };
 
         let curIntIdx = null, curIntCol = null; window.openIntRecModal = (i, c) => { curIntIdx = i; curIntCol = c; renderIntRecModal(); document.getElementById('internalModal').style.display = 'flex'; };
         function renderIntRecModal() { const item = items[curIntIdx], data = item.internal[curIntCol]; let logs = data.logs.map((l,li) => `<tr><td>${l.date}</td><td>${escapeHTML(l.note)}</td><td style="font-weight:bold;color:#d35400;">${l.qty}</td><td><button class="btn-danger" onclick="window.delIntLog(${li})">刪除</button></td></tr>`).join('');
-            document.getElementById('internal-modal-title-area').innerHTML = `<span class="modal-title-text">📝 調整明細</span><h3 class="modal-title-main">${curIntCol} (${item.id})</h3>`;
-            document.getElementById('internal-modal-body').innerHTML = `<div style="text-align:right; margin-bottom:10px; font-size:24px; font-weight:bold; color:#e84118;">總計: ${data.total}</div><div class="modal-input-group"><input id="it-d" value="${(new Date().getMonth()+1)+'/'+new Date().getDate()}" style="width:60px;"><input id="it-n" placeholder="備註" style="flex:1;"><input id="it-q" type="number" placeholder="量" style="width:60px;"><button class="btn" onclick="window.addIntLog()">+ 新增</button></div><table class="breakdown-table"><tr><th>日期</th><th>備註</th><th>數量</th><th>操作</th></tr>${logs}</table>`; }
+            document.getElementById('internal-modal-title-area').innerHTML = `<h3 class="modal-title-main">${curIntCol} (${item.id})</h3>`;
+            document.getElementById('internal-modal-body').innerHTML = `<div style="text-align:right; font-size:24px; font-weight:bold; color:#e84118;">總計: ${data.total}</div><div class="modal-input-group"><input id="it-d" value="${(new Date().getMonth()+1)+'/'+new Date().getDate()}" style="width:60px;"><input id="it-n" placeholder="備註" style="flex:1;"><input id="it-q" type="number" placeholder="量" style="width:60px;"><button class="btn" onclick="window.addIntLog()">+ 新增</button></div><table class="breakdown-table"><tr><th>日期</th><th>備註</th><th>數量</th><th>操作</th></tr>${logs}</table>`; }
         window.addIntLog = () => { const q = parseInt(document.getElementById('it-q').value)||0; items[curIntIdx].internal[curIntCol].logs.push({date:document.getElementById('it-d').value, note:document.getElementById('it-n').value, qty:q}); items[curIntIdx].internal[curIntCol].total = items[curIntIdx].internal[curIntCol].logs.reduce((s,l)=>s+l.qty,0); window.saveData(); renderIntRecModal(); };
         window.delIntLog = (li) => { items[curIntIdx].internal[curIntCol].logs.splice(li,1); items[curIntIdx].internal[curIntCol].total = items[curIntIdx].internal[curIntCol].logs.reduce((s,l)=>s+l.qty,0); window.saveData(); renderIntRecModal(); };
 
@@ -299,7 +412,7 @@
             let itH = internalColumns.map(c => `<tr><td>${c}</td><td style="color:#d35400;">${item.internal[c].total}</td></tr>`).join('');
             document.getElementById('modal-title-area').innerHTML = `<span class="modal-title-text">🔍 庫存驗算</span><h3 class="modal-title-main">${item.id}</h3>`;
             document.getElementById('modal-body').innerHTML = `
-                <div style="padding:15px; background:#f9f9f9; border-left:4px solid #000; margin-bottom:20px;"><b>倉庫庫存：${item.warehouse}</b><br><small>總入庫(${item.inStock.total}) - 內部調整 - 各店總和</small></div>
+                <div style="padding:15px; background:#f9f9f9; border-left:4px solid #000; margin-bottom:20px;"><b>倉庫庫存：${item.warehouse}</b></div>
                 <h4>內部損耗明細</h4><table class="breakdown-table">${itH}</table><h4 style="margin-top:20px;">經銷商剩餘明細</h4><table class="breakdown-table">${dtH}</table>`;
             document.getElementById('stockModal').style.display = 'flex';
         };
@@ -308,8 +421,7 @@
         document.getElementById('btn-add-item').onclick = () => { items.unshift({ id:'NEW', category:'其他', name:'新商品', size:'F', price:0, inStock:{total:0, logs:[]}, internal:{}, dist:{}, distDetails:{}, warehouse:0 }); window.saveData(); };
         document.getElementById('btn-add-col').onclick = () => { const v = document.getElementById('new-col-name').value.trim(); if(v && !internalColumns.includes(v)) { internalColumns.push(v); document.getElementById('new-col-name').value=''; window.saveData(); } };
         document.getElementById('btn-add-dist').onclick = () => { const v = document.getElementById('new-dist-name').value.trim(); if(v && !distributors.includes(v)) { distributors.push(v); distColors[v] = document.getElementById('new-dist-color').value; currentDist = v; window.saveData(); } };
-        
-        window.delIntCol = (i) => { if(confirm('刪除此自訂欄位？')) { internalColumns.splice(i,1); window.saveData(); } };
+        window.delIntCol = (i) => { if(confirm('刪除此自訂欄位？相關明細將一併清除！')) { internalColumns.splice(i,1); window.saveData(); } };
         window.addYear = () => { const y = prompt("新增年份 (如 2027)"); if(y && !yearsList.includes(y)){ yearsList.push(y); yearsList.sort(); window.saveData(); } };
         document.getElementById('edit-dist-color').onchange = (e) => { distColors[currentDist] = e.target.value; window.saveData(); };
 
@@ -318,15 +430,12 @@
         new Sortable(document.getElementById('overview-body'), { animation: 150, handle: '.drag-handle', onEnd: (e) => { const moved = items.splice(e.oldIndex, 1)[0]; items.splice(e.newIndex, 0, moved); window.saveData(); } });
 
         // 重置功能
-        document.getElementById('btn-reset').onclick = () => { if(confirm('警告：這將清空雲端資料並重置為測試資料！')) { 
-            items = [{ id: 'FE3C146', category: '項鍊', name: 'TUT Necklace 鐵珠吊墜', size: 'F', inStock: {total:50, logs:[{date:'-', note:'初始', qty:50}]}, price: 1280, warehouse: 50, internal: {}, dist: {}, distDetails: {} }];
-            distributors = ['HYST']; internalColumns = ['樣品']; distColors = {'HYST':'#000000'}; yearsList=['2026']; window.saveData(); } 
+        document.getElementById('btn-reset').onclick = () => { if(confirm('警告：這將清空雲端資料並重置為測試資料！所有數據都會消失！')) { 
+            items = []; distributors = []; internalColumns = []; categories = ['項鍊', '戒指', '耳環', '手鍊', '服飾', '其他']; window.saveData(); } 
         };
         
-        // 頁籤切換
         window.openTab = (e, n) => { const tc = document.getElementsByClassName("tabcontent"), tl = document.getElementsByClassName("tablinks"); for(let i=0; i<tc.length; i++) tc[i].style.display = "none"; for(let i=0; i<tl.length; i++) tl[i].className = tl[i].className.replace(" active", ""); document.getElementById(n).style.display = "block"; e.currentTarget.className += " active"; };
         window.closeModal = (id, e) => { if (e === true || (e && e.target.id === id)) document.getElementById(id).style.display = 'none'; };
-
         function renderAll() { let aid = document.activeElement?document.activeElement.id:null; renderOverview(); renderInternal(); renderDistTabs(); renderDistTable(); if(aid){let el=document.getElementById(aid); if(el)el.focus();} }
         document.getElementById("defaultOpen").click();
     </script>

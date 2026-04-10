@@ -7,7 +7,7 @@ body { font-family: 'Helvetica Neue', Arial, 'Microsoft JhengHei', sans-serif; p
 h2 { font-weight: 300; letter-spacing: 2px; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 40px; display: flex; justify-content: space-between; align-items: flex-end; text-transform: uppercase; }
 h2 span { font-size: 12px; font-weight: 600; color: #888; letter-spacing: 1px; }
 
-/* === 頂層導航標籤 (Tabs) === */
+/* === 頂層導航標籤 === */
 .tab { display: flex; border-bottom: 1px solid #e0e0e0; margin-bottom: 30px; }
 .tab button { background: transparent; border: none; outline: none; cursor: pointer; padding: 15px 30px; font-size: 13px; font-weight: 600; letter-spacing: 1px; color: #aaa; transition: 0.3s; text-transform: uppercase; }
 .tab button:hover { color: #555; }
@@ -72,7 +72,7 @@ input:focus, select:focus { border-color: #000; background-color: #fff; box-shad
 .modal-input-group input:focus { border-color: #000; box-shadow: 0 0 0 2px rgba(0,0,0,0.1); }
 .modal-input-group .btn { margin: 0; padding: 10px 15px;}
 
-/* 針對新功能的微調 CSS */
+/* 小組件 */
 .drag-handle { cursor: grab; color: #bbb; font-size: 16px; padding: 0 10px; }
 .drag-handle:active { cursor: grabbing; color: #000; }
 select.category-select { padding: 8px; border: 1px solid #e0e0e0; border-radius: 4px; background: #fdfdfd; outline: none; font-size: 12px; }
@@ -81,66 +81,87 @@ select.category-select { padding: 8px; border: 1px solid #e0e0e0; border-radius:
 .cat-list-item:hover { background: #f9f9f9; }
 
 /* ==========================================================================
-   📱 手機版專屬介面 (Mobile App UI) - 終極修復版
+   📱 手機直式專屬介面 (Portrait Mobile Fix)
    ========================================================================== */
 @media (max-width: 768px) {
-    /* 1. 基礎排版與底部導航留白 */
-    body { padding: 15px 10px 90px 10px; } 
-    h2 { font-size: 18px; flex-direction: column; align-items: flex-start; gap: 8px; padding-bottom: 10px; margin-bottom: 20px;}
+    /* 1. 防破版核心：強制所有元素不准超出邊界 */
+    * { box-sizing: border-box !important; }
     
-    /* 2. 底部 App 導航列 (修復層級與覆蓋問題) */
-    .tab { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; z-index: 9999; margin: 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-around; padding-bottom: env(safe-area-inset-bottom); border-top: 1px solid #eee; }
-    .tab button { padding: 15px 0; font-size: 13px; flex: 1; border: none; border-top: 3px solid transparent; border-radius: 0; text-align: center; }
-    .tab button.active { border-top: 3px solid #000; background: #fafafa; color: #000; font-weight: bold; border-bottom: none; }
-
-    /* 3. 控制列排列優化 (搜尋框與按鈕) */
-    .controls { flex-direction: column; align-items: stretch; gap: 15px; margin-bottom: 15px; }
-    .controls > div { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; justify-content: space-between; }
-    .controls .btn { flex: 1; text-align: center; padding: 12px 5px; font-size: 12px; min-width: 30%; }
-    .search-box { width: 100%; padding: 12px; font-size: 14px; border-radius: 8px; }
+    body { padding: 15px 15px 90px 15px; background: #f5f6f8; } /* 增加灰底讓白卡片更明顯 */
+    h2 { font-size: 18px; margin-bottom: 15px; flex-direction: column; align-items: flex-start; gap: 5px; }
     
-    .dist-tabs { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 5px; width: 100%; justify-content: flex-start; -webkit-overflow-scrolling: touch; }
-    .btn-dist { flex-shrink: 0; }
-
-    /* 4. 魔法：表格轉卡片式設計 (修復破版) */
-    table, thead, tbody, th, td, tr { display: block; width: 100%; }
-    thead tr { display: none; /* 隱藏原本的橫向表頭 */ }
-    tr { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 10px; }
-    td { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f5f5f5; padding: 12px 5px; min-height: 44px; }
+    /* 2. 控制列：按鈕改為上下堆疊，全寬度超好按 */
+    .controls { flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 15px; }
+    .controls > div { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+    .controls .btn { width: 100%; padding: 14px; font-size: 14px; margin: 0 !important; text-align: center; }
+    .search-box { width: 100%; padding: 14px; font-size: 15px; }
+    
+    /* 3. 水平滑動選單 (店鋪與月份不會擠在一起，可左右滑動) */
+    .dist-tabs, .year-tab-container, .sub-tab { 
+        display: flex; flex-wrap: nowrap; overflow-x: auto; 
+        -webkit-overflow-scrolling: touch; padding-bottom: 10px; gap: 10px; 
+    }
+    .btn-dist, .btn-year, .btn-sub { flex: 0 0 auto; margin: 0; }
+    
+    /* 4. 魔法：直式卡片表格 */
+    .table-container { overflow-x: visible; margin-top: 10px; border: none; }
+    table, tbody, tr, td { display: block; width: 100%; border: none; }
+    thead { display: none; } /* 隱藏舊版表頭 */
+    
+    tbody { display: flex; flex-direction: column; gap: 15px; }
+    tr { 
+        background: #fff; border-radius: 12px; padding: 0 15px 10px 15px; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06); border: 1px solid #eaeaea; 
+    }
+    
+    /* 卡片內的每一行 (左標題, 右輸入框) */
+    td { 
+        display: flex; align-items: center; justify-content: space-between; 
+        padding: 12px 0; border-bottom: 1px solid #f0f0f0; min-height: 48px; 
+    }
     td:last-child { border-bottom: none; }
     
-    /* 注入的標題 */
-    td::before { content: attr(data-label); font-weight: 600; font-size: 13px; color: #555; flex-basis: 30%; flex-shrink: 0; text-align: left; margin-right: 10px; }
-    
-    /* 5. ⭐ 輸入框防破版關鍵 (min-width: 0) ⭐ */
-    td input, td select { 
-        flex: 1; 
-        min-width: 0; /* 這是防止 input 撐破手機版面的關鍵魔法 */ 
-        max-width: 65%; 
-        text-align: right; 
-        padding: 10px; 
-        font-size: 14px; 
-        border: 1px solid #e0e0e0; 
-        background: #fafafa; 
-        border-radius: 6px; 
+    /* 卡片左側標題 */
+    td::before { 
+        content: attr(data-label); font-size: 13px; color: #777; font-weight: 600; 
+        flex: 0 0 80px; /* 鎖死寬度，確保畫面不會扭曲 */
+        text-align: left; margin-right: 10px; 
     }
-    td input.name-input { text-align: right; } /* 強制靠右對齊保持卡片美觀 */
-    td input:focus, td select:focus { border-color: #000; background: #fff; }
     
-    /* 拖曳按鈕獨立置中 */
-    .drag-handle { justify-content: center; background: #f8f9fa; border-radius: 8px; margin-bottom: 5px; font-size: 20px; color: #888; border-bottom: none; }
-    .drag-handle::before { display: none; }
-
-    /* 其他小按鈕與數字修復 */
-    td > button { padding: 8px 15px; font-size: 12px; }
-    .clickable-number { width: auto; min-width: 40px; text-align: center; padding: 8px 15px; }
-    .auto-cell, .highlight-cell { text-align: right; }
-
-    /* 6. 彈窗全螢幕優化 (防止超出畫面無法滾動) */
-    .modal-content { width: 95%; height: auto; max-height: 85vh; padding: 25px 15px; border-radius: 12px; margin-top: 2vh; overflow-y: auto; }
-    .close-btn { top: 10px; right: 15px; font-size: 30px; background: #eee; border-radius: 50%; width: 35px; height: 35px; line-height: 35px; text-align: center; color: #555; }
-    .modal-input-group { flex-direction: column; align-items: stretch; gap: 10px; padding: 15px; border-left: none; border-top: 4px solid #000; }
-    .modal-input-group input { width: 100% !important; text-align: left; padding: 12px; font-size: 14px; margin: 0; box-sizing: border-box;}
-    .modal-input-group button { width: 100%; padding: 15px; font-size: 14px; }
-    .breakdown-table th, .breakdown-table td { padding: 10px 5px; font-size: 12px; }
+    /* 卡片右側輸入框與文字 */
+    td input, td select { 
+        flex: 1; min-width: 0; /* min-width:0 是防止破版的最關鍵魔法 */
+        width: 100%; text-align: right; padding: 10px; font-size: 15px; 
+        background: #fdfdfd; border: 1px solid #e0e0e0; border-radius: 6px; 
+    }
+    td input.name-input { text-align: right; } /* 為了直式美觀，品名也靠右對齊 */
+    td input:focus, td select:focus { background: #fff; border-color: #000; }
+    
+    td > button { padding: 8px 15px; font-size: 13px; }
+    .clickable-number { flex: 1; text-align: right; padding: 10px; font-size: 15px; border-style: solid; background: transparent; }
+    .auto-cell, .highlight-cell { text-align: right; font-size: 15px; }
+    
+    /* 拖曳按鈕置頂 */
+    td.drag-handle { 
+        justify-content: center; background: #f8f9fa; margin: 0 -15px; 
+        padding: 10px; border-radius: 12px 12px 0 0; color: #ccc; font-size: 20px; 
+    }
+    td.drag-handle::before { display: none; } /* 隱藏標籤 */
+    
+    /* 5. 底部 App 導航列 */
+    .tab { 
+        position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; 
+        z-index: 9999; margin: 0; padding: 0; padding-bottom: env(safe-area-inset-bottom); 
+        display: flex; box-shadow: 0 -4px 15px rgba(0,0,0,0.05); border-top: 1px solid #eee;
+    }
+    .tab button { 
+        flex: 1; padding: 15px 0; font-size: 13px; text-align: center; 
+        border: none; border-top: 3px solid transparent; color: #888; border-radius: 0; 
+    }
+    .tab button.active { border-top-color: #000; color: #000; font-weight: bold; background: #fafafa; }
+    
+    /* 6. 彈窗優化 (防止滿出版面) */
+    .modal-content { width: 95%; padding: 20px; border-radius: 12px; max-height: 85vh; }
+    .modal-input-group { flex-direction: column; gap: 10px; border-left: none; border-top: 4px solid #000; padding: 15px; }
+    .modal-input-group input, .modal-input-group button { width: 100% !important; margin: 0; padding: 12px; font-size: 15px; text-align: left; box-sizing: border-box; }
 }

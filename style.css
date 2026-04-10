@@ -3,54 +3,13 @@
    ========================================================================== */
 
 /* === 核心排版與色調 === */
-body { 
-    font-family: 'Helvetica Neue', Arial, 'Microsoft JhengHei', sans-serif; 
-    padding: 40px; 
-    background-color: #ffffff; 
-    color: #111111; 
-    letter-spacing: 0.5px; 
-}
-
-h2 { 
-    font-weight: 300; 
-    letter-spacing: 2px; 
-    border-bottom: 2px solid #000; 
-    padding-bottom: 20px; 
-    margin-bottom: 40px; 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: flex-end; 
-    text-transform: uppercase;
-}
-
-h2 span { 
-    font-size: 12px; 
-    font-weight: 600; 
-    color: #888; 
-    letter-spacing: 1px; 
-}
+body { font-family: 'Helvetica Neue', Arial, 'Microsoft JhengHei', sans-serif; padding: 40px; background-color: #ffffff; color: #111111; letter-spacing: 0.5px; }
+h2 { font-weight: 300; letter-spacing: 2px; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 40px; display: flex; justify-content: space-between; align-items: flex-end; text-transform: uppercase; }
+h2 span { font-size: 12px; font-weight: 600; color: #888; letter-spacing: 1px; }
 
 /* === 頂層導航標籤 (Tabs) === */
-.tab { 
-    display: flex; 
-    border-bottom: 1px solid #e0e0e0; 
-    margin-bottom: 30px; 
-}
-
-.tab button { 
-    background: transparent; 
-    border: none; 
-    outline: none; 
-    cursor: pointer; 
-    padding: 15px 30px; 
-    font-size: 13px; 
-    font-weight: 600; 
-    letter-spacing: 1px; 
-    color: #aaa; 
-    transition: 0.3s; 
-    text-transform: uppercase; 
-}
-
+.tab { display: flex; border-bottom: 1px solid #e0e0e0; margin-bottom: 30px; }
+.tab button { background: transparent; border: none; outline: none; cursor: pointer; padding: 15px 30px; font-size: 13px; font-weight: 600; letter-spacing: 1px; color: #aaa; transition: 0.3s; text-transform: uppercase; }
 .tab button:hover { color: #555; }
 .tab button.active { color: #000; border-bottom: 3px solid #000; }
 .tabcontent { display: none; padding: 0; animation: fadeIn 0.4s ease; }
@@ -58,19 +17,7 @@ h2 span {
 
 /* === 經銷商子導航 === */
 .dist-tabs { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
-.btn-dist { 
-    padding: 10px 24px; 
-    background: #f8f9fa; 
-    border: 1px solid #ddd; 
-    cursor: pointer; 
-    font-size: 12px; 
-    font-weight: 600; 
-    color: #555; 
-    transition: all 0.2s ease; 
-    letter-spacing: 1px; 
-    text-transform: uppercase; 
-    border-radius: 4px; /* 微微的圓角增加按鈕感 */
-}
+.btn-dist { padding: 10px 24px; background: #f8f9fa; border: 1px solid #ddd; cursor: pointer; font-size: 12px; font-weight: 600; color: #555; transition: all 0.2s ease; letter-spacing: 1px; text-transform: uppercase; border-radius: 4px; }
 .btn-dist:hover { border-color: #000; color: #000; background: #fff; transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.05);}
 .btn-dist.active { background: #000; color: #fff; border-color: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.15);}
 
@@ -78,75 +25,31 @@ h2 span {
 .btn-sub { padding: 8px 16px; background-color: transparent; border: 1px solid transparent; border-radius: 4px; cursor: pointer; font-size: 12px; color: #888; transition: 0.2s; letter-spacing: 1px;}
 .btn-sub:hover { background-color: #f0f0f0; color: #000; }
 .btn-sub.active { background: #ececec; color: #000; border-color: #ccc; font-weight: 600; }
-.btn-add-month { border: 1px dashed #bbb; color: #555; }
-.btn-add-month:hover { border-color: #000; background: #000; color: #fff; }
 
 /* === 表格設計 === */
 .table-container { width: 100%; overflow-x: auto; margin-top: 20px; padding-bottom: 20px;}
 table { width: 100%; border-collapse: collapse; border-top: 2px solid #000; border-bottom: 2px solid #000; }
 th, td { border: none; border-bottom: 1px solid #eee; padding: 12px 8px; white-space: nowrap; text-align: center; vertical-align: middle; }
 th { padding: 18px 8px; background-color: #fcfcfc; color: #333; font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid #ccc; }
-/* 滑鼠移到該列時的高亮提示 */
 tr:hover td { background-color: #f4f6f8; }
 
-/* === 輸入框 (強化操作感) === */
-input { 
-    width: 100%; height: 100%; padding: 8px 10px; box-sizing: border-box; 
-    border: 1px solid #e0e0e0; /* 明確的邊框 */
-    background-color: #fdfdfd; /* 微凸顯的底色 */
-    border-radius: 4px; /* 微圓角比較不生硬 */
-    text-align: center; font-size: 13px; font-weight: 500; 
-    outline: none; transition: all 0.2s ease; font-family: inherit; 
-    color: #000;
-}
+/* === 輸入框 === */
+input, select { width: 100%; height: 100%; padding: 8px 10px; box-sizing: border-box; border: 1px solid #e0e0e0; background-color: #fdfdfd; border-radius: 4px; text-align: center; font-size: 13px; font-weight: 500; outline: none; transition: all 0.2s ease; font-family: inherit; color: #000; }
 input.name-input { text-align: left; min-width: 180px; }
 input.id-input { text-align: left; min-width: 100px; font-weight: 600; }
 input.short-input { min-width: 60px; } 
-
-/* 正在輸入時的強烈提示 */
-input:focus { 
-    border-color: #000; 
-    background-color: #fff; 
-    box-shadow: 0 0 0 3px rgba(0,0,0,0.08); 
-    transform: translateY(-1px);
-}
+input:focus, select:focus { border-color: #000; background-color: #fff; box-shadow: 0 0 0 3px rgba(0,0,0,0.08); transform: translateY(-1px); }
 
 .search-box { padding: 10px 15px; width: 250px; border: 1px solid #ccc; background: #fafafa; font-size: 12px; letter-spacing: 1px; outline: none; border-radius: 20px; }
 .search-box:focus { border-color: #000; background: #fff; box-shadow: 0 0 0 3px rgba(0,0,0,0.05);}
 
-/* === 數據網格字體 === */
 .text-cell { font-size: 13px; }
-
-/* === 可點擊的數字標籤 (按鈕化) === */
-.clickable-number { 
-    cursor: pointer; 
-    display: inline-block;
-    padding: 6px 12px;
-    border: 1px dashed #a0aab5; /* 虛線代表可點擊/可展開 */
-    background-color: #f4f7f9; /* 淡淡的冷藍灰底色 */
-    border-radius: 6px;
-    font-weight: 600; 
-    color: #2c3e50; 
-    transition: all 0.2s ease; 
-}
-.clickable-number:hover { 
-    background-color: #000; 
-    color: #fff !important; 
-    border-style: solid;
-    border-color: #000;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
-
+.clickable-number { cursor: pointer; display: inline-block; padding: 6px 12px; border: 1px dashed #a0aab5; background-color: #f4f7f9; border-radius: 6px; font-weight: 600; color: #2c3e50; transition: all 0.2s ease; }
+.clickable-number:hover { background-color: #000; color: #fff !important; border-style: solid; border-color: #000; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
 .auto-cell { font-weight: bold; color: #2980b9; padding: 10px; text-align: center; font-size: 14px; } 
 
 /* === 按鈕 === */
-.btn { 
-    padding: 10px 20px; background-color: #000; color: #fff; 
-    border: 1px solid #000; border-radius: 4px; cursor: pointer; 
-    font-size: 11px; font-weight: 600; letter-spacing: 1px; 
-    text-transform: uppercase; transition: all 0.2s ease; 
-}
+.btn { padding: 10px 20px; background-color: #000; color: #fff; border: 1px solid #000; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; transition: all 0.2s ease; }
 .btn:hover { background-color: #333; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
 .btn-outline { background-color: #fff; color: #000; border-color: #ccc; }
 .btn-outline:hover { background-color: #f0f0f0; color: #000; border-color: #000;}
@@ -159,16 +62,65 @@ input:focus {
 .modal-content { background: #fff; padding: 40px; border: none; width: 90%; max-width: 650px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); max-height: 85vh; overflow-y: auto; position: relative; border-radius: 8px;}
 .close-btn { position: absolute; top: 20px; right: 25px; cursor: pointer; font-size: 32px; font-weight: 300; color: #888; transition: 0.2s; line-height: 1;}
 .close-btn:hover { color: #e74c3c; transform: scale(1.1);}
-
 .modal-title-text { font-size: 12px; color: #888; letter-spacing: 1px; margin-bottom: 5px; display: block; text-transform: uppercase; }
 .modal-title-main { font-size: 24px; font-weight: 600; color: #000; margin-top: 0; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e0e0e0;}
-
 .breakdown-table { width: 100%; margin-top: 20px; border-collapse: collapse; font-size: 13px;}
 .breakdown-table th, .breakdown-table td { border-bottom: 1px solid #e0e0e0; padding: 15px 10px; text-align: center; height: auto;}
 .breakdown-table th { background-color: #f8f9fa; color: #555; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; border-bottom: 2px solid #ccc;}
-
-/* Modal 內的輸入區塊 */
 .modal-input-group { background: #f8f9fa; border: 1px solid #ddd; border-radius: 6px; padding: 20px; margin-bottom: 25px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; border-left: 4px solid #000;}
 .modal-input-group input { border: 1px solid #ccc; padding: 10px; background: #fff; }
 .modal-input-group input:focus { border-color: #000; box-shadow: 0 0 0 2px rgba(0,0,0,0.1); }
 .modal-input-group .btn { margin: 0; padding: 10px 15px;}
+
+/* 針對新功能的微調 CSS */
+.drag-handle { cursor: grab; color: #bbb; font-size: 16px; padding: 0 10px; }
+.drag-handle:active { cursor: grabbing; color: #000; }
+select.category-select { padding: 8px; border: 1px solid #e0e0e0; border-radius: 4px; background: #fdfdfd; outline: none; font-size: 12px; }
+.year-tab-container { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 2px dashed #eee; display: flex; flex-wrap: wrap; gap: 8px; }
+.cat-list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+.cat-list-item:hover { background: #f9f9f9; }
+
+/* ==========================================================================
+   📱 手機版專屬介面 (Mobile App UI)
+   ========================================================================== */
+@media (max-width: 768px) {
+    /* 底部導航留白 */
+    body { padding: 20px 15px 80px 15px; } 
+    h2 { font-size: 16px; flex-direction: column; align-items: flex-start; gap: 8px; padding-bottom: 15px; }
+    
+    /* 底部 App 導航列 */
+    .tab { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; z-index: 1000; margin: 0; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); border-bottom: none; border-top: 1px solid #eee; justify-content: space-between; padding-bottom: env(safe-area-inset-bottom); }
+    .tab button { padding: 15px 5px; font-size: 11px; flex: 1; border-bottom: none; }
+    .tab button.active { border-bottom: none; border-top: 3px solid #000; background: #fbfbfb; }
+
+    /* 控制列排列優化 */
+    .controls { flex-direction: column; align-items: stretch; gap: 15px; }
+    .controls > div { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; width: 100%; }
+    .search-box { width: 100%; }
+    .btn { flex: 1; text-align: center; padding: 12px; } /* 按鈕變大好按 */
+
+    /* 魔法：表格轉卡片式設計 */
+    table, thead, tbody, th, td, tr { display: block; }
+    thead tr { display: none; /* 隱藏原本的表頭 */ }
+    tr { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.03); padding: 5px; position: relative; }
+    td { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f5f5f5; padding: 12px 10px; text-align: right; min-height: 40px; }
+    td:last-child { border-bottom: none; }
+    
+    /* 利用 data-label 屬性自動生成手機版表頭 */
+    td::before { content: attr(data-label); font-weight: 600; font-size: 12px; color: #888; text-transform: uppercase; margin-right: 15px; white-space: nowrap; }
+    
+    /* 卡片內的輸入框優化 */
+    input, select { text-align: right; background: transparent; border: 1px solid transparent; width: auto; max-width: 65%; flex: 1; }
+    input:focus, select:focus { background: #f4f6f8; border: 1px solid #ccc; text-align: right; }
+    input.name-input { text-align: right; min-width: unset; }
+    
+    .drag-handle { justify-content: center; background: #fcfcfc; border-radius: 8px 8px 0 0; border-bottom: 2px solid #eee; }
+    .drag-handle::before { display: none; }
+
+    /* 彈窗全螢幕 */
+    .modal-content { width: 100%; height: 100%; max-height: 100vh; border-radius: 0; padding: 20px; padding-top: 60px; }
+    .close-btn { top: 15px; right: 20px; font-size: 35px; background: #fff; border-radius: 50%; width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .modal-input-group { flex-direction: column; align-items: stretch; }
+    .modal-input-group input { width: 100% !important; text-align: left; margin-bottom: 10px; }
+    .breakdown-table th, .breakdown-table td { padding: 10px 5px; font-size: 11px; }
+}
